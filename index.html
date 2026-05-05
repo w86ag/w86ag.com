@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>w86ag.com Color Palette Generator</title>
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css'><link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<body class="ng-cloak" ng-app="app" ng-controller="appController">
+    <div class="canvas" ng-style="{'background-color': color}" id="canvas">
+
+        <!-- Inline SVG Logo -->
+        <svg id="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="106" height="50">
+            <div class="logo-container"></div>
+        </svg>
+
+        <!-- Other content of your page -->
+        <div class="dial"></div>
+        <div class="color-display" ng-class="setClasses(color, null, true)">
+            <div class="color-ring-outer">
+                <div class="color-ring" ng-style="setRingRotation()">
+                    <div ng-repeat="c in shades track by $index" ng-style="setRotation($index)">
+                        <div class="color-brick" tap="doIt(c)" ng-class="setClasses(c, color, false)" ng-style="{'backgroundColor': c}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="color-info" ng-class="setClasses(tuner.hex, null, true)" ng-style="{'background': tuner.hex}">
+                <h1>{{tuner.hex}}</h1>
+                <div class="refresh" tap="doIt()"><i class="fa fa-refresh fa-3x fa-fw"></i></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // JavaScript to dynamically change SVG logo color based on the background color
+        const canvas = document.getElementById('canvas');
+        const logo = document.getElementById('logo');
+
+        function updateLogoColor() {
+            const bgColor = window.getComputedStyle(canvas).backgroundColor;
+
+            // Check if the background is black or white and change the logo color accordingly
+            if (bgColor === 'rgb(0, 0, 0)') { // If background is black
+                logo.querySelector('circle').setAttribute('fill', 'white'); // Set SVG fill to white
+            } else { // If background is white
+                logo.querySelector('circle').setAttribute('fill', 'black'); // Set SVG fill to black
+            }
+        }
+
+        // Call the function to set the initial logo color
+        updateLogoColor();
+
+        // Monitor the background color change (if the background color changes dynamically)
+        // You may need to trigger `updateLogoColor()` whenever the background color changes
+    </script>
+</body>
+
+
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.6/hammer.min.js'></script><script  src="./script.js"></script>
+<script type="text/javascript">
+function disableSelection(e)
+{
+    if(typeof e.onselectstart!="undefined")
+        e.onselectstart=function(){return false};
+    else if(typeof e.style.MozUserSelect!="undefined")e.style.MozUserSelect="none";
+    else e.onmousedown=function(){return false};
+    e.style.cursor="default"
+}
+window.onload=function(){disableSelection(document.body)}
+</script>
+<script type="text/javascript">
+document.oncontextmenu=function(e){
+    var t=e||window.event;
+    var n=t.target||t.srcElement;
+    if(n.nodeName!="A")return false
+};
+document.ondragstart=function(){return false};
+</script>
+<style type="text/css">
+* : (input, textarea) {
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+}
+</style>
+<style type="text/css">
+img {
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+}
+</style>
+<script type="text/javascript">
+window.addEventListener("keydown",function(e){
+    if(e.ctrlKey&&(e.which==65||e.which==66||e.which==67||e.which==70||e.which==73||e.which==80||e.which==83||e.which==85||e.which==86))      {e.preventDefault()}
+});
+document.keypress=function(e){
+    if(e.ctrlKey&&(e.which==65||e.which==66||e.which==70||e.which==67||e.which==73||e.which==80||e.which==83||e.which==85||e.which==86)){}
+    return false;
+}
+</script>
+<script type="text/javascript">
+document.onkeydown=function(e){
+    e=e||window.event;
+    if(e.keyCode==123||e.keyCode==18){return false}
+}
+</script>
+
+</body>
+</html>
