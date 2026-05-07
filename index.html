@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>w86ag & 7 Days Creation Collobration</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e0e;
+      --surface: #1a1a1a;
+      --accent: #ff4d6d;
+      --text: #f0f0f0;
+      --muted: #666;
+      --gap: 12px;
+      --cols: 5;
+      --radius: 14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(14,14,14,0.85);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid #222;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:hover { background: #252525; border-color: #555; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+    .btn.primary:hover { background: #e03d5b; }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tab {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: var(--text); border-color: #444; }
+    .tab.active { background: var(--text); color: #000; border-color: var(--text); font-weight: 500; }
+
+    .count-badge {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Masonry Grid ── */
+    main {
+      padding: var(--gap);
+    }
+
+    .masonry {
+      columns: var(--cols);
+      column-gap: var(--gap);
+    }
+
+    .card {
+      break-inside: avoid;
+      margin-bottom: var(--gap);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      background: var(--surface);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.45s forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card img,
+    .card video {
+      width: 100%;
+      display: block;
+      border-radius: var(--radius);
+    }
+
+    .card video {
+      object-fit: cover;
+    }
+
+    /* Hover overlay */
+    .card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+      border-radius: var(--radius);
+      opacity: 0;
+      transition: opacity 0.25s;
+      display: flex;
+      align-items: flex-end;
+      padding: 14px;
+    }
+
+    .card:hover .card-overlay { opacity: 1; }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .type-badge {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .type-badge.video { background: rgba(255,77,109,0.7); }
+
+    /* Video play icon */
+    .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px; height: 42px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+    }
+
+    .play-icon svg { fill: #fff; width: 16px; height: 16px; margin-left: 2px; }
+    .card.is-video:hover .play-icon { opacity: 1; }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-inner img,
+    .lightbox-inner video {
+      max-width: 90vw;
+      max-height: 88vh;
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      font-size: 1.4rem;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      z-index: 1000;
+    }
+
+    .lightbox-close:hover { background: rgba(255,255,255,0.2); }
+
+    /* Empty / loading states */
+    .state-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .state-msg h2 { font-size: 1.1rem; font-weight: 400; margin-bottom: 8px; color: var(--text); }
+    .state-msg p { font-size: 0.85rem; line-height: 1.6; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 2px solid #333;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 1200px) { :root { --cols: 4; } }
+    @media (max-width: 900px)  { :root { --cols: 3; } }
+    @media (max-width: 600px)  { :root { --cols: 2; } header { flex-wrap: wrap; } .filter-tabs { order: 3; } }
+    @media (max-width: 380px)  { :root { --cols: 1; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="dot"></span> w86ag AI Library</div>
+
+  <div class="filter-tabs">
+    <button class="tab active" data-filter="all">All</button>
+    <button class="tab" data-filter="image">Images</button>
+    <button class="tab" data-filter="video">Videos</button>
+  </div>
+
+  <div class="controls">
+    <span class="count-badge" id="countBadge">— items</span>
+    <button class="btn" id="shuffleBtn">⇄ Shuffle</button>
+  </div>
+</header>
+
+<main>
+  <div class="masonry" id="grid"></div>
+  <div class="state-msg" id="stateMsg">
+    <div class="spinner"></div>
+    <h2>Loading media…</h2>
+    <p>Reading your media folder</p>
+  </div>
+</main>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose">✕</button>
+  <div class="lightbox-inner" id="lbInner"></div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  //  CONFIG — set your media folder path here
+  // ─────────────────────────────────────────────
+  const MEDIA_JSON = 'media.json';   // path to your generated JSON
+  const MEDIA_FOLDER = 'media/';     // folder where your files live
+
+  const IMAGE_EXTS = ['jpg','jpeg','png','gif','webp','avif','svg'];
+  const VIDEO_EXTS = ['mp4','webm','mov','ogg'];
+
+  // ─────────────────────────────────────────────
+  const grid      = document.getElementById('grid');
+  const stateMsg  = document.getElementById('stateMsg');
+  const countBadge= document.getElementById('countBadge');
+  const lightbox  = document.getElementById('lightbox');
+  const lbInner   = document.getElementById('lbInner');
+  const lbClose   = document.getElementById('lightbox').querySelector('#lbClose');
+
+  let allMedia = [];
+  let currentFilter = 'all';
+
+  // Shuffle array (Fisher-Yates)
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getType(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (IMAGE_EXTS.includes(ext)) return 'image';
+    if (VIDEO_EXTS.includes(ext)) return 'video';
+    return null;
+  }
+
+  function buildCard(filename, index) {
+    const type = getType(filename);
+    if (!type) return null;
+
+    const card = document.createElement('div');
+    card.className = 'card' + (type === 'video' ? ' is-video' : '');
+    card.style.animationDelay = `${(index % 20) * 40}ms`;
+    card.dataset.type = type;
+
+    let media;
+    if (type === 'image') {
+      media = document.createElement('img');
+      media.src = MEDIA_FOLDER + filename;
+      media.alt = filename;
+      media.loading = 'lazy';
+      media.decoding = 'async';
+    } else {
+      media = document.createElement('video');
+      media.src = MEDIA_FOLDER + filename;
+      media.muted = true;
+      media.loop = true;
+      media.preload = 'metadata';
+      media.playsInline = true;
+      // Autoplay on hover
+      card.addEventListener('mouseenter', () => media.play().catch(()=>{}));
+      card.addEventListener('mouseleave', () => { media.pause(); media.currentTime = 0; });
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'card-overlay';
+    overlay.innerHTML = `<div class="card-meta"><span class="type-badge ${type}">${type === 'video' ? '▶ Video' : '🖼 Image'}</span></div>`;
+
+    const playIcon = document.createElement('div');
+    playIcon.className = 'play-icon';
+    playIcon.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+
+    card.appendChild(media);
+    card.appendChild(overlay);
+    if (type === 'video') card.appendChild(playIcon);
+
+    // Lightbox click
+    card.addEventListener('click', () => openLightbox(filename, type));
+
+    return card;
+  }
+
+  function renderGrid(files) {
+    grid.innerHTML = '';
+
+    if (files.length === 0) {
+      stateMsg.style.display = 'block';
+      stateMsg.innerHTML = `<h2>No media found</h2><p>No ${currentFilter === 'all' ? '' : currentFilter + ' '}files match your filter.</p>`;
+      countBadge.textContent = '0 items';
+      return;
+    }
+
+    stateMsg.style.display = 'none';
+    countBadge.textContent = `${files.length} item${files.length !== 1 ? 's' : ''}`;
+
+    files.forEach((filename, i) => {
+      const card = buildCard(filename, i);
+      if (card) grid.appendChild(card);
+    });
+  }
+
+  function getFiltered() {
+    if (currentFilter === 'all') return allMedia;
+    return allMedia.filter(f => getType(f) === currentFilter);
+  }
+
+  // Filter tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderGrid(getFiltered());
+    });
+  });
+
+  // Shuffle button
+  document.getElementById('shuffleBtn').addEventListener('click', () => {
+    allMedia = shuffle(allMedia);
+    renderGrid(getFiltered());
+  });
+
+  // Lightbox
+  function openLightbox(filename, type) {
+    lbInner.innerHTML = '';
+    let el;
+    if (type === 'image') {
+      el = document.createElement('img');
+      el.src = MEDIA_FOLDER + filename;
+      el.alt = filename;
+    } else {
+      el = document.createElement('video');
+      el.src = MEDIA_FOLDER + filename;
+      el.controls = true;
+      el.autoplay = true;
+      el.loop = true;
+    }
+    lbInner.appendChild(el);
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    lbInner.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  lbClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  // ─── Load media.json ───
+  async function init() {
+    stateMsg.style.display = 'block';
+    stateMsg.innerHTML = `<div class="spinner"></div><h2>Loading media…</h2><p>Reading media.json</p>`;
+
+    try {
+      const res = await fetch(MEDIA_JSON);
+      if (!res.ok) throw new Error('media.json not found');
+      const files = await res.json();
+
+      // Filter to only known media types & shuffle on load
+      allMedia = shuffle(files.filter(f => getType(f)));
+
+      if (allMedia.length === 0) {
+        stateMsg.innerHTML = `<h2>No media found</h2><p>Your media.json is empty or has no supported files.<br>Run <strong>generate.bat</strong> after adding files to your media folder.</p>`;
+        return;
+      }
+
+      renderGrid(allMedia);
+
+    } catch (err) {
+      stateMsg.innerHTML = `
+        <h2>⚠ media.json not found</h2>
+        <p>
+          Double-click <strong>generate.bat</strong> to create it,<br>
+          then refresh this page.<br><br>
+          <small style="color:#555">${err.message}</small>
+        </p>`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
