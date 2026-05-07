@@ -1,36 +1,30 @@
-name: Generate media.json
+name: Generate media list
 
-# ─── Runs automatically whenever you push or upload files to GitHub ───
+# Runs automatically whenever you push or upload files to GitHub
 on:
   push:
     branches:
       - main
       - master
-    paths:
-      - 'media/**'   # only triggers when files in media/ folder change
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write   # allows the action to commit media.json back
+      contents: write
 
     steps:
 
-      # Step 1 — Download your repo files
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2 — Scan media folder and generate media.json
-      - name: Generate media.json
+      - name: Inject media list into index.html
         run: |
           echo "Scanning media/ folder..."
 
-          # Supported extensions
           EXTENSIONS=("jpg" "jpeg" "png" "gif" "webp" "avif" "svg" "mp4" "webm" "mov" "ogg")
 
-          # Collect all matching files
           FILES=()
           for EXT in "${EXTENSIONS[@]}"; do
             while IFS= read -r -d '' FILE; do
@@ -39,31 +33,26 @@ jobs:
             done < <(find media/ -maxdepth 1 -iname "*.${EXT}" -print0 2>/dev/null)
           done
 
-          # Build JSON array
-          JSON="["
-          for i in "${!FILES[@]}"; do
-            if [ $i -gt 0 ]; then
-              JSON+=","
-            fi
-            JSON+="${FILES[$i]}"
-          done
-          JSON+="]"
+          # Build JS array string
+          JSON_ARRAY="[$(IFS=,; echo "${FILES[*]}")]"
+          echo "Found ${#FILES[@]} files: $JSON_ARRAY"
 
-          echo "$JSON" > media.json
-          echo "Done! Found ${#FILES[@]} media files."
-          echo "media.json content:"
-          cat media.json
+          # Also write media.json as backup
+          echo "$JSON_ARRAY" > media.json
 
-      # Step 3 — Commit and push media.json back to your repo
-      - name: Commit media.json
+          # Inject directly into index.html — no fetch needed, no CORS issues
+          sed -i "s|const MEDIA_FILES = window.__MEDIA_FILES__ || \[\];|const MEDIA_FILES = $JSON_ARRAY;|g" index.html
+
+          echo "Done! index.html updated."
+
+      - name: Commit changes
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add media.json
-          # Only commit if media.json actually changed
+          git add index.html media.json
           if git diff --staged --quiet; then
-            echo "No changes to media.json — skipping commit."
+            echo "No changes — skipping commit."
           else
-            git commit -m "🤖 Auto-update media.json"
+            git commit -m "🤖 Auto-update media list"
             git push
           fi
