@@ -475,9 +475,9 @@
   lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-  // ─── Media list is injected here by GitHub Actions ───
-  // DO NOT edit this line manually — it is auto-updated on every push
-  const MEDIA_FILES = window.__MEDIA_FILES__ || [];
+  // AUTO-INJECT-START
+  const MEDIA_FILES = []; // AUTO-GENERATED
+  // AUTO-INJECT-END
 
   function init() {
     stateMsg.style.display = 'block';
