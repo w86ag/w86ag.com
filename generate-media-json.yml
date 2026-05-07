@@ -16,14 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update media list in index.html
+      - name: Generate media-list.js
         run: |
           python3 - << 'PYEOF'
-          import os, re, json
+          import os, json
 
           EXTENSIONS = {'jpg','jpeg','png','gif','webp','avif','svg','mp4','webm','mov','ogg'}
 
-          # Scan media folder
           files = []
           if os.path.isdir('media'):
               for f in sorted(os.listdir('media')):
@@ -33,42 +32,23 @@ jobs:
 
           print(f"Found {len(files)} files: {files}")
 
-          # Write media.json too
-          with open('media.json', 'w') as f:
-              json.dump(files, f)
+          # Write media-list.js — loaded as a normal script tag, no fetch, no CORS
+          js = f'window.MEDIA_FILES = {json.dumps(files, ensure_ascii=False)};'
+          with open('media-list.js', 'w') as f:
+              f.write(js)
 
-          # Read index.html
-          with open('index.html', 'r') as f:
-              html = f.read()
-
-          # Replace everything between the marker comments
-          new_var = f'  var MEDIA_FILES = {json.dumps(files)};'
-          new_html = re.sub(
-              r'/\* MEDIA-LIST-START \*/.*?/\* MEDIA-LIST-END \*/',
-              f'/* MEDIA-LIST-START */\n{new_var}\n  /* MEDIA-LIST-END */',
-              html,
-              flags=re.DOTALL
-          )
-
-          if new_html == html:
-              print("ERROR: Could not find markers in index.html!")
-              exit(1)
-          else:
-              print("SUCCESS: index.html updated!")
-              print(f"New line: {new_var}")
-
-          with open('index.html', 'w') as f:
-              f.write(new_html)
+          print("media-list.js written:")
+          print(js)
           PYEOF
 
       - name: Commit and push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add index.html media.json
+          git add media-list.js
           if git diff --staged --quiet; then
-            echo "Nothing changed, skipping commit."
+            echo "No changes, skipping commit."
           else
-            git commit -m "🤖 Auto-update media list"
+            git commit -m "🤖 Auto-update media-list.js"
             git push
           fi
