@@ -1,6 +1,5 @@
 name: Generate media list
 
-# Runs automatically whenever you push or upload files to GitHub
 on:
   push:
     branches:
@@ -21,29 +20,53 @@ jobs:
 
       - name: Inject media list into index.html
         run: |
-          echo "Scanning media/ folder..."
+          python3 << 'EOF'
+          import os, json, re
 
-          EXTENSIONS=("jpg" "jpeg" "png" "gif" "webp" "avif" "svg" "mp4" "webm" "mov" "ogg")
+          # Supported file types
+          EXTENSIONS = {
+            'jpg','jpeg','png','gif','webp','avif','svg',
+            'mp4','webm','mov','ogg'
+          }
 
-          FILES=()
-          for EXT in "${EXTENSIONS[@]}"; do
-            while IFS= read -r -d '' FILE; do
-              BASENAME=$(basename "$FILE")
-              FILES+=("\"$BASENAME\"")
-            done < <(find media/ -maxdepth 1 -iname "*.${EXT}" -print0 2>/dev/null)
-          done
+          # Scan media/ folder
+          files = []
+          media_dir = 'media'
+          if os.path.isdir(media_dir):
+            for f in sorted(os.listdir(media_dir)):
+              ext = f.rsplit('.', 1)[-1].lower() if '.' in f else ''
+              if ext in EXTENSIONS:
+                files.append(f)
 
-          # Build JS array string
-          JSON_ARRAY="[$(IFS=,; echo "${FILES[*]}")]"
-          echo "Found ${#FILES[@]} files: $JSON_ARRAY"
+          print(f"Found {len(files)} media files: {files}")
 
-          # Also write media.json as backup
-          echo "$JSON_ARRAY" > media.json
+          # Write media.json
+          with open('media.json', 'w') as jf:
+            json.dump(files, jf)
 
-          # Inject directly into index.html — no fetch needed, no CORS issues
-          sed -i "s|const MEDIA_FILES = window.__MEDIA_FILES__ || \[\];|const MEDIA_FILES = $JSON_ARRAY;|g" index.html
+          # Read index.html
+          with open('index.html', 'r', encoding='utf-8') as hf:
+            html = hf.read()
 
-          echo "Done! index.html updated."
+          # Replace ANYTHING between the markers with fresh file list
+          # Markers are comment tags we embed in index.html
+          json_str = json.dumps(files)
+          new_line = f'  const MEDIA_FILES = {json_str}; // AUTO-GENERATED'
+
+          # Replace between marker comments
+          pattern = r'// AUTO-INJECT-START.*?// AUTO-INJECT-END'
+          replacement = f'// AUTO-INJECT-START\n{new_line}\n  // AUTO-INJECT-END'
+          new_html = re.sub(pattern, replacement, html, flags=re.DOTALL)
+
+          if new_html == html:
+            print("WARNING: markers not found in index.html!")
+          else:
+            print("Successfully updated index.html")
+
+          with open('index.html', 'w', encoding='utf-8') as hf:
+            hf.write(new_html)
+
+          EOF
 
       - name: Commit changes
         run: |
