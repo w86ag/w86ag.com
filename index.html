@@ -323,14 +323,10 @@
   // ─────────────────────────────────────────────
   //  CONFIG — set your media folder path here
   // ─────────────────────────────────────────────
-  const MEDIA_JSON = 'media.json';
   const MEDIA_FOLDER = 'media/';
 
   const IMAGE_EXTS = ['jpg','jpeg','png','gif','webp','avif','svg'];
   const VIDEO_EXTS = ['mp4','webm','mov','ogg'];
-
-  // Cache buster — forces fresh load, bypasses GitHub Pages CDN cache
-  const CACHE_BUST = '?v=' + Date.now();
 
   // ─────────────────────────────────────────────
   const grid      = document.getElementById('grid');
@@ -479,37 +475,28 @@
   lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-  // ─── Load media.json ───
-  async function init() {
+  // ─── Media list is injected here by GitHub Actions ───
+  // DO NOT edit this line manually — it is auto-updated on every push
+  const MEDIA_FILES = window.__MEDIA_FILES__ || [];
+
+  function init() {
     stateMsg.style.display = 'block';
-    stateMsg.innerHTML = `<div class="spinner"></div><h2>Loading media…</h2><p>Reading media.json</p>`;
 
-    try {
-      // Cache bust so GitHub Pages CDN always serves fresh media.json
-      const res = await fetch(MEDIA_JSON + CACHE_BUST);
-      if (!res.ok) throw new Error(`media.json fetch failed: HTTP ${res.status}`);
-      const files = await res.json();
+    const files = MEDIA_FILES.filter(f => getType(f));
 
-      // Filter to only known media types & shuffle on load
-      allMedia = shuffle(files.filter(f => getType(f)));
-
-      if (allMedia.length === 0) {
-        stateMsg.innerHTML = `<h2>No media found</h2><p>media.json is empty or has no supported files.<br>Check your media/ folder has files in it.</p>`;
-        return;
-      }
-
-      renderGrid(allMedia);
-
-    } catch (err) {
-      stateMsg.style.display = 'block';
+    if (files.length === 0) {
       stateMsg.innerHTML = `
-        <h2>⚠ Could not load media.json</h2>
+        <h2>No media found</h2>
         <p>
-          Error: <strong>${err.message}</strong><br><br>
-          Tried to load: <code style="color:#aaa">${location.href.replace(/\/[^/]*$/, '/')}${MEDIA_JSON}</code><br><br>
-          Make sure <strong>media.json</strong> exists in the same folder as index.html in your repo.
+          No files have been added yet, or the GitHub Action hasn't run.<br><br>
+          Add files to your <strong>media/</strong> folder and push to GitHub.
         </p>`;
+      countBadge.textContent = '0 items';
+      return;
     }
+
+    allMedia = shuffle(files);
+    renderGrid(allMedia);
   }
 
   init();
