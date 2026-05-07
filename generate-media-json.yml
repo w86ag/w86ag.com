@@ -1,4 +1,4 @@
-name: Generate media list
+name: Update media list
 
 on:
   push:
@@ -7,74 +7,67 @@ on:
       - master
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
     steps:
-
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject media list into index.html
+      - name: Update media list in index.html
         run: |
-          python3 << 'EOF'
-          import os, json, re
+          python3 - << 'PYEOF'
+          import os, re, json
 
-          # Supported file types
-          EXTENSIONS = {
-            'jpg','jpeg','png','gif','webp','avif','svg',
-            'mp4','webm','mov','ogg'
-          }
+          EXTENSIONS = {'jpg','jpeg','png','gif','webp','avif','svg','mp4','webm','mov','ogg'}
 
-          # Scan media/ folder
+          # Scan media folder
           files = []
-          media_dir = 'media'
-          if os.path.isdir(media_dir):
-            for f in sorted(os.listdir(media_dir)):
-              ext = f.rsplit('.', 1)[-1].lower() if '.' in f else ''
-              if ext in EXTENSIONS:
-                files.append(f)
+          if os.path.isdir('media'):
+              for f in sorted(os.listdir('media')):
+                  ext = f.rsplit('.', 1)[-1].lower() if '.' in f else ''
+                  if ext in EXTENSIONS:
+                      files.append(f)
 
-          print(f"Found {len(files)} media files: {files}")
+          print(f"Found {len(files)} files: {files}")
 
-          # Write media.json
-          with open('media.json', 'w') as jf:
-            json.dump(files, jf)
+          # Write media.json too
+          with open('media.json', 'w') as f:
+              json.dump(files, f)
 
           # Read index.html
-          with open('index.html', 'r', encoding='utf-8') as hf:
-            html = hf.read()
+          with open('index.html', 'r') as f:
+              html = f.read()
 
-          # Replace ANYTHING between the markers with fresh file list
-          # Markers are comment tags we embed in index.html
-          json_str = json.dumps(files)
-          new_line = f'  const MEDIA_FILES = {json_str}; // AUTO-GENERATED'
-
-          # Replace between marker comments
-          pattern = r'// AUTO-INJECT-START.*?// AUTO-INJECT-END'
-          replacement = f'// AUTO-INJECT-START\n{new_line}\n  // AUTO-INJECT-END'
-          new_html = re.sub(pattern, replacement, html, flags=re.DOTALL)
+          # Replace everything between the marker comments
+          new_var = f'  var MEDIA_FILES = {json.dumps(files)};'
+          new_html = re.sub(
+              r'/\* MEDIA-LIST-START \*/.*?/\* MEDIA-LIST-END \*/',
+              f'/* MEDIA-LIST-START */\n{new_var}\n  /* MEDIA-LIST-END */',
+              html,
+              flags=re.DOTALL
+          )
 
           if new_html == html:
-            print("WARNING: markers not found in index.html!")
+              print("ERROR: Could not find markers in index.html!")
+              exit(1)
           else:
-            print("Successfully updated index.html")
+              print("SUCCESS: index.html updated!")
+              print(f"New line: {new_var}")
 
-          with open('index.html', 'w', encoding='utf-8') as hf:
-            hf.write(new_html)
+          with open('index.html', 'w') as f:
+              f.write(new_html)
+          PYEOF
 
-          EOF
-
-      - name: Commit changes
+      - name: Commit and push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add index.html media.json
           if git diff --staged --quiet; then
-            echo "No changes — skipping commit."
+            echo "Nothing changed, skipping commit."
           else
             git commit -m "🤖 Auto-update media list"
             git push
